@@ -1,5 +1,9 @@
 import subprocess
 import pymongo
+import requests
+import json
+import os
+import socket
 from pymongo import MongoClient
 import time
 #service name is the name of the service link in rancher
@@ -13,9 +17,9 @@ def mongo_check(rancher_server, service_name):
     client = MongoClient('mongodb://'+service_name)
     db = client.db
     ismaster= db.command('isMaster')
-    if 'secondary' in ismaster and ismaster['ismaster'] == True:
+    if ismaster['ismaster'] == True:
         print "The server is in a replica set and is primary"
-    elif 'secondary' in ismaster and ismaster['ismaster'] == False:
+    elif ismaster['secondary'] == True:
         print "The server is in a replica set and is secondary"
     else:
         mongo_connect(rancher_server,service_name)
@@ -38,8 +42,10 @@ def mongo_connect(ranchersrv,service_name):
     ismaster= db.command('isMaster')
     mongo_primary = ismaster['primary'].split(':')[0]
     port=ismaster['primary'].split(':')[1]
-    task="rs.add('"+service_name+"')"
-    print subprocess.call(["/usr/bin/mongo", "--host", str(mongo_primary),"--port", str(port), "--eval", task])
+    target_ip = socket.gethostbyname(service_name)
+    task="rs.add('"+target_ip+":27017')"
+    print task
+    subprocess.call(["/usr/bin/mongo", "--host", str(mongo_primary),"--port", str(port), "--eval", task])
 
 def checking_mongo(rancher_server, service_name):
     while True:
