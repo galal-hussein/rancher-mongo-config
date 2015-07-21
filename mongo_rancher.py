@@ -1,5 +1,9 @@
 import subprocess
 import pymongo
+import requests
+import json
+import os
+import socket
 from pymongo import MongoClient
 import time
 import netifaces
@@ -14,9 +18,9 @@ def mongo_check(rancher_server, service_name):
     client = MongoClient('mongodb://'+service_name)
     db = client.db
     ismaster= db.command('isMaster')
-    if 'secondary' in ismaster and ismaster['ismaster'] == True:
+    if ismaster['ismaster'] == True:
         print "The server is in a replica set and is primary"
-    elif 'secondary' in ismaster and ismaster['ismaster'] == False:
+    elif ismaster['secondary'] == True:
         print "The server is in a replica set and is secondary"
     else:
         mongo_connect(rancher_server,service_name)
@@ -48,7 +52,7 @@ def mongo_connect(ranchersrv,service_name):
             mongo_samehost = service_data[i]['primaryIpAddress']
             break
     task="rs.add('"+mongo_samehost+"')"
-    print subprocess.call(["/usr/bin/mongo", "--host", str(mongo_primary),"--port", str(port), "--eval", task])
+    subprocess.call(["/usr/bin/mongo", "--host", str(mongo_primary),"--port", str(port), "--eval", task])
 
 def checking_mongo(rancher_server, service_name):
     while True:
