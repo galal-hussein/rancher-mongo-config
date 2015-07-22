@@ -14,8 +14,23 @@ import netifaces
 #for ex: service name: mongo
 #service id will be the id of the mongo service in Rancher
 #and the desired server to add to the replica set is mongo server
-def mongo_check(rancher_server, service_name):
-    client = MongoClient('mongodb://'+service_name)
+def mongo_check(ranchersrv, service_name):
+    project_url = 'http://'+ranchersrv+'/v1/projects/1a5/services'
+    project_resp = requests.get(url=project_url)
+    project_data = json.loads(project_resp.text)['data']
+    for i in range(len(project_data)):
+        if project_data[i]['name'] == service_name:
+            service_id = project_data[i]['id']
+            break
+    url = 'http://'+ranchersrv+'/v1/projects/1a5/services/'+service_id+'/instances'
+    service_resp = requests.get(url=url)
+    service_data = json.loads(service_resp.text)['data']
+    mongo_host = get_host(ranchersrv)
+    for i in  range(len(service_data)):
+        if service_data[i]['requestedHostId'] == mongo_host:
+            mongo_samehost = service_data[i]['primaryIpAddress']
+            break
+    client = MongoClient('mongodb://'+mongo_samehost)
     db = client.db
     ismaster= db.command('isMaster')
     if ismaster['ismaster'] == True:
@@ -23,7 +38,7 @@ def mongo_check(rancher_server, service_name):
     elif ismaster['secondary'] == True:
         print "The server is in a replica set and is secondary"
     else:
-        mongo_connect(rancher_server,service_name)
+        mongo_connect(ranchersrv,service_name)
 
 def mongo_connect(ranchersrv,service_name):
     project_url = 'http://'+ranchersrv+'/v1/projects/1a5/services'
