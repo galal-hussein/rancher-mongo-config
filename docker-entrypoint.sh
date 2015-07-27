@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "Running the Connecting script"
+sleep 15
 cat << EOF > mongo_replica.py
 #!/usr/bin/python
 import subprocess
