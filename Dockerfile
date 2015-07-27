@@ -11,8 +11,8 @@ RUN mkdir -p /mongo
 WORKDIR /mongo
 
 ENV MONGO_SERVICE_NAME mongo
-ADD mongo_run.sh mongo_run.sh
-RUN chmod u+x mongo_run.sh
 
-ENTRYPOINT /bin/bash mongo_run.sh
-CMD []
+COPY docker-entrypoint.sh /entrypoint.sh
+RUN chmod u+x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["mongod"]
