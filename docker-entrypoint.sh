@@ -10,11 +10,11 @@ import socket
 from pymongo import MongoClient
 import time
 import netifaces
-import dns.resolver
+import DNS
 import sys
 
 def mongo_connect(service_name,myip):
-    arecords = dns.resolver.query(service_name,'A')
+    arecords = DNS.dnslookup(service_name,'A')
     if len(arecords) <= 3:
 	print "The number of Mongo servers is less than 3..can't connect"
 	sys.exit(0)

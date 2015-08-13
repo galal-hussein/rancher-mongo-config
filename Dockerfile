@@ -5,7 +5,7 @@ RUN apt-get update \
 && apt-get install -yqq python build-essential python-dev python-pip python-setuptools \
 && pip install pymongo \
 && pip install netifaces \
-&& pip install dnspython
+&& pip install pydns
 
 RUN mkdir -p /mongo
 WORKDIR /mongo
