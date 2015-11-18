@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Running the Connecting script"
-sleep 15
+sleep 10
 cat << EOF > mongo_replica.py
 #!/usr/bin/python
 import subprocess
@@ -15,11 +15,6 @@ import sys
 
 def mongo_connect(service_name,myip):
     arecords = DNS.dnslookup(service_name,'A')
-    if len(arecords) <= 3:
-	print "The number of Mongo servers is less than 3..can't connect"
-	sys.exit(0)
-    # also it is assumed that we use 27017 port for now
-    #choose random mongo server
     random_mongo_address = str(arecords[0])+":27017"
     client = MongoClient('mongodb://'+random_mongo_address)
     db = client.db
@@ -33,6 +28,10 @@ def mongo_connect(service_name,myip):
     except ValueError as err:
 	print(err.msg)
 
+def get_cluster(service_name):
+     arecords = DNS.dnslookup(service_name,'A')
+     return arecords
+
 def get_myip():
     #get ip of the running container
     ipaddress = netifaces.ifaddresses('eth0')[netifaces.AF_INET][1]['addr']
@@ -40,12 +39,17 @@ def get_myip():
 
 if __name__ == "__main__":
     service_name = os.environ['MONGO_SERVICE_NAME']
+    # get cluster len
+    print get_cluster(service_name)
+    cluster_len = len(get_cluster(service_name))
     myip = get_myip()
-    mongo_connect(service_name,myip)
+    if cluster_len > 3:
+        mongo_connect(service_name,myip)
     
 EOF
 chmod u+x mongo_replica.py
 ./mongo_replica.py
+kill `pidof mongod`
 
 if [ $? -ne 0 ]
 then
