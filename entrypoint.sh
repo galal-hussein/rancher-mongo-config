@@ -1,6 +1,12 @@
 #!/bin/bash
-echo "Running the Connecting script"
+
+# Check for lowest ID
 sleep 10
+/lowest_idx.sh
+if [ "$?" -eq "0" ]; then
+    echo "This is the lowest numbered contianer.. Handling the initiation."
+    /mongo-replset-init.sh $@
+fi
 cat << EOF > mongo_replica.py
 #!/usr/bin/python
 import subprocess
@@ -49,7 +55,6 @@ if __name__ == "__main__":
 EOF
 chmod u+x mongo_replica.py
 ./mongo_replica.py
-kill `pidof mongod`
 
 if [ $? -ne 0 ]
 then
