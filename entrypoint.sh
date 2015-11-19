@@ -6,7 +6,7 @@ sleep 10
 if [ "$?" -eq "0" ]; then
     echo "This is the lowest numbered contianer.. Handling the initiation."
     /mongo-replset-init.sh $@
-fi
+else
 cat << EOF > mongo_replica.py
 #!/usr/bin/python
 import subprocess
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     
 EOF
 chmod u+x mongo_replica.py
-./mongo_replica.py
+./mongo_replica.py &
 
 if [ $? -ne 0 ]
 then
@@ -79,3 +79,5 @@ if [ "$1" = 'mongod' ]; then
 fi
 
 exec "$@"
+
+fi
