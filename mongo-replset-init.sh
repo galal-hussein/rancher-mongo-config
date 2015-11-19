@@ -24,8 +24,10 @@ def cluster_init(service_name):
 	new_host['_id'] = i
 	new_host['host'] = arecords[i]	
 	cfg['config']['members'].append(new_host)
-    print c.admin.command('replSetReconfig', cfg['config'], force=True)
-
+    c.admin.command('replSetReconfig', cfg['config'], force=True)
+    for i in range(len(arecords)):
+	c = MongoClient("mongodb://"+str(arecords[i]))
+	
 def get_cluster(service_name):
      arecords = DNS.dnslookup(service_name,'A')
      return arecords
@@ -41,10 +43,12 @@ def find_master(service_name):
     return False
 	        
 if __name__ == "__main__":
+    time.sleep(10)
+    # wait for mongo to start
     service_name = os.environ['MONGO_SERVICE_NAME']
     while len(get_cluster(service_name)) < 3:
 	print "mongo instances are less than 3.. waiting!"
-    	time.sleep(1)
+    	time.sleep(5)
     ismaster = find_master(service_name)
     if ismaster:
 	print 'Master is already initated.. nothing to do!'
@@ -53,9 +57,30 @@ if __name__ == "__main__":
 	cluster_init(service_name)
     
 EOF
-# starting mongo-instance
-mongod $@ &
-sleep 10
+
+# Run cluster init script
 chmod u+x mongo_cluster_init.py
-./mongo_cluster_init.py
-kill `pidof mongod`
+./mongo_cluster_init.py &
+
+if [ $? -ne 0 ]
+then
+echo "Error Occurred.."
+fi
+
+set -e
+
+if [ "${1:0:1}" = '-' ]; then
+       set -- mongod "$@"
+fi
+
+if [ "$1" = 'mongod' ]; then
+       chown -R mongodb /data/db
+
+       numa='numactl --interleave=all'
+       if $numa true &> /dev/null; then
+               set -- $numa "$@"
+       fi
+
+       exec gosu mongodb "$@"
+fi
+
