@@ -1,5 +1,4 @@
 #!/bin/bash
-JQ=/opt/rancher/bin/jq
 ###
 # Detect if this container has the lowest create ID
 ###
