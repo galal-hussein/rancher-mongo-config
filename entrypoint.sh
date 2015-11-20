@@ -1,61 +1,22 @@
 #!/bin/bash
 
+# Installing dnsutils
+echo "deb http://security.debian.org/ wheezy/updates main contrib non-free " | tee /etc/apt/sources.list.d/wheezy-security.list > /dev/null
+echo "deb-src http://security.debian.org/ wheezy/updates main contrib non-free" | tee /etc/apt/sources.list.d/wheezy-security.list > /dev/null
+apt-get -q update > /dev/null
+apt-get install -qqy dnsutils > /dev/null 2>&1
+
 # Check for lowest ID
-sleep 10
-/lowest_idx.sh
+/opt/rancher/bin/lowest_idx.sh
 if [ "$?" -eq "0" ]; then
     echo "This is the lowest numbered contianer.. Handling the initiation."
-    /mongo-replset-init.sh $@
+    /opt/rancher/bin/initiate.sh $@
 else
-cat << EOF > mongo_replica.py
-#!/usr/bin/python
-import subprocess
-import pymongo
-import os
-import socket
-from pymongo import MongoClient
-import time
-import netifaces
-import DNS
-import sys
 
-def mongo_connect(service_name,myip):
-    arecords = DNS.dnslookup(service_name,'A')
-    random_mongo_address = str(arecords[0])+":27017"
-    client = MongoClient('mongodb://'+random_mongo_address)
-    db = client.db
-    ismaster= db.command('isMaster')
-    # primary mongo server
-    mongo_primary = ismaster['primary'].split(':')[0]
-    port=ismaster['primary'].split(':')[1]
-    task="rs.add('"+myip+"')"
-    try:
-	subprocess.call(["/usr/bin/mongo", "--host", str(mongo_primary),"--port", str(port), "--eval", task])
-    except ValueError as err:
-	print(err.msg)
+# Run the scaling script
+/opt/rancher/bin/scaling.sh &
 
-def get_cluster(service_name):
-     arecords = DNS.dnslookup(service_name,'A')
-     return arecords
-
-def get_myip():
-    #get ip of the running container
-    ipaddress = netifaces.ifaddresses('eth0')[netifaces.AF_INET][1]['addr']
-    return ipaddress
-
-if __name__ == "__main__":
-    service_name = os.environ['MONGO_SERVICE_NAME']
-    # get cluster len
-    print get_cluster(service_name)
-    cluster_len = len(get_cluster(service_name))
-    myip = get_myip()
-    if cluster_len > 3:
-        mongo_connect(service_name,myip)
-    
-EOF
-chmod u+x mongo_replica.py
-./mongo_replica.py &
-
+# Start mongodb
 if [ $? -ne 0 ]
 then
 echo "Error Occurred.."
