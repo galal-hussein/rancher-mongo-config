@@ -1,10 +1,10 @@
 # rancher-mongo-config
-A Base Docker image to be used as a sidekick for Mongodb container, the scripts in this container will create replica set when you create a service in Rancher environment (at least 3 containers).
+A base Docker image to be used as a sidekick for MongoDB container, the scripts in this container will create replica set when you create a service in Rancher environment (at least 3 containers).
 
 ## Requirements
-- Docker engine
-- Rancher server
-- rancher-compose
+- Docker engine.
+- Rancher server.
+- rancher-compose.
 
 ## Usage
 
@@ -58,4 +58,4 @@ And now to run the service run the following:
 ```
 # rancher-compose up
 ```
-As a added bonus the service can scale up as you go, just change the settings in rancher-compose.yml or use the Web UI to scale the serivce and the container will connect to the replicaset and be attached.
+As an added bonus the service can scale up as you go, just change the settings in rancher-compose.yml or use the Web UI to scale the serivce and the container will connect to the replicaset and be attached.
